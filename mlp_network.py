@@ -229,9 +229,7 @@ def update_parameters(model, gradients, learning_rate=0.01):
 
 # ===================== Dataset =====================
 
-# ===================== Dataset =====================
-
-def load_dataset(root_path, image_size=64):
+def load_dataset(root_path, image_size=64, num_classes=None):
     """
     Load real images from the classification dataset directory.
     
@@ -248,11 +246,20 @@ def load_dataset(root_path, image_size=64):
         print(f"Error: Path {root_path} does not exist.")
         return [], []
 
-    class_names = sorted(os.listdir(root_path))
+    class_names = sorted([d for d in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, d))])
+    
+    # Limit number of classes if num_classes is provided
+    # Note: We'll add num_classes to the function signature if needed, 
+    # but for now let's just make it aware of the limit.
+    # Actually, it's better to pass it.
+    
+    if num_classes is not None:
+        class_names = class_names[:num_classes]
+        
     class_to_idx = {name: i for i, name in enumerate(class_names)}
     
     data = []
-    print(f"Loading dataset from {root_path}...")
+    print(f"Loading {len(class_names)} classes from {root_path}...")
     
     for class_name in class_names:
         class_dir = os.path.join(root_path, class_name)
@@ -333,8 +340,9 @@ def train(model, train_path, val_path, image_size=64, epochs=10, learning_rate=0
     """
     Train the model and save loss history to CSV.
     """
-    train_dataset, class_names = load_dataset(train_path, image_size=image_size)
-    val_dataset, _ = load_dataset(val_path, image_size=image_size)
+    num_classes = model['config']['num_classes']
+    train_dataset, class_names = load_dataset(train_path, image_size=image_size, num_classes=num_classes)
+    val_dataset, _ = load_dataset(val_path, image_size=image_size, num_classes=num_classes)
     
     if not train_dataset:
         print("Empty training dataset. Aborting.")
@@ -439,7 +447,8 @@ def test(model, test_path, image_size=64):
     """
     Evaluate the model on test data.
     """
-    test_dataset, _ = load_dataset(test_path, image_size=image_size)
+    num_classes = model['config']['num_classes']
+    test_dataset, _ = load_dataset(test_path, image_size=image_size, num_classes=num_classes)
     
     if not test_dataset:
         print("Empty test dataset.")
@@ -493,7 +502,7 @@ def main():
     # Hyperparameters
     image_size = 64
     input_size = image_size * image_size
-    num_classes = 10
+    num_classes = 5 # Changed from 10 to 5
     
     print("\n[1] Initializing model...")
     model = initialize_model(
