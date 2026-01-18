@@ -153,17 +153,15 @@ with col2:
                 confidence = probabilities[prediction_idx]
                 
                 # Class Names
-                # Try to load from the dataset directory first
-                dataset_path = r"e:\learn_midterm\final_classification_dataset\train"
-                if os.path.exists(dataset_path):
-                    class_names = sorted([d for d in os.listdir(dataset_path) if os.path.isdir(os.path.join(dataset_path, d))])
+                # Specific 5 classes for the current model
+                allowed_classes = ["Capacitor", "Battery", "Transistor"]
+                
+                # Check if model has different number of classes
+                if model and model.get('config', {}).get('num_classes') != len(allowed_classes):
+                    # If model config differs, try to adapt
+                    class_names = sorted(allowed_classes)
                 else:
-                    # Fallback list
-                    class_names = [
-                        "Battery", "Capacitor", "Diode", "Display", 
-                        "IC", "LED", "Potentiometer", "Resistor", 
-                        "Switch", "Transistor"
-                    ]
+                    class_names = sorted(allowed_classes)
                 
                 if len(class_names) != len(probabilities):
                     st.warning(f"Warning: Model has {len(probabilities)} output units but {len(class_names)} classes were found.")

@@ -10,7 +10,7 @@ Tài liệu này được biên soạn để đảm bảo nội dung thuyết tr
 *Mục tiêu: Đặt vấn đề và giới thiệu "nguyên liệu" đầu vào.*
 
 **1. Mở đầu & Đặt vấn đề:**
-- Giới thiệu mục tiêu dự án: Tạo ra một hệ thống tự động nhận diện 10 loại linh kiện điện tử (Battery, Capacitor, Resistor, etc.) từ hình ảnh.
+- Giới thiệu mục tiêu dự án: Tạo ra một hệ thống tự động nhận diện **5 loại linh kiện điện tử chính**: **Capacitor, Diode, LED, Resistor và Transistor**.
 - Tại sao dùng NumPy? Để hiểu sâu bản chất toán học của Deep Learning mà không phụ thuộc vào các thư viện đen (black-box) như PyTorch/TensorFlow.
 
 **2. Quy trình xử lý dữ liệu (The Kitchen):**

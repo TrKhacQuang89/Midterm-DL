@@ -229,11 +229,20 @@ def update_parameters(model, gradients, learning_rate=0.01):
 
 # ===================== Dataset =====================
 
-def load_dataset(root_path, image_size=64, num_classes=None):
+def load_dataset(root_path, image_size=64, allowed_classes=None):
     """
     Load real images from the classification dataset directory.
     
     Structure: root_path/class_name/image.jpg
+    
+    Parameters:
+    -----------
+    root_path : str
+        Path to the dataset directory
+    image_size : int
+        Size to resize images to
+    allowed_classes : list, optional
+        List of class names to include. If None, load all directories.
     
     Returns:
     --------
@@ -246,15 +255,10 @@ def load_dataset(root_path, image_size=64, num_classes=None):
         print(f"Error: Path {root_path} does not exist.")
         return [], []
 
-    class_names = sorted([d for d in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, d))])
-    
-    # Limit number of classes if num_classes is provided
-    # Note: We'll add num_classes to the function signature if needed, 
-    # but for now let's just make it aware of the limit.
-    # Actually, it's better to pass it.
-    
-    if num_classes is not None:
-        class_names = class_names[:num_classes]
+    if allowed_classes is not None:
+        class_names = sorted(allowed_classes)
+    else:
+        class_names = sorted([d for d in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, d))])
         
     class_to_idx = {name: i for i, name in enumerate(class_names)}
     
@@ -263,7 +267,8 @@ def load_dataset(root_path, image_size=64, num_classes=None):
     
     for class_name in class_names:
         class_dir = os.path.join(root_path, class_name)
-        if not os.path.isdir(class_dir):
+        if not (os.path.exists(class_dir) and os.path.isdir(class_dir)):
+            print(f"Warning: Class directory {class_dir} not found. Skipping.")
             continue
             
         files = [f for f in os.listdir(class_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
@@ -336,13 +341,12 @@ def draw_loss(history_path='loss_history.csv', save_path='loss_plot.png'):
 
 # ===================== Training Loop =====================
 
-def train(model, train_path, val_path, image_size=64, epochs=10, learning_rate=0.1, batch_size=32, csv_path='loss_history.csv'):
+def train(model, train_path, val_path, image_size=64, epochs=10, learning_rate=0.1, batch_size=32, csv_path='loss_history.csv', allowed_classes=None):
     """
     Train the model and save loss history to CSV.
     """
-    num_classes = model['config']['num_classes']
-    train_dataset, class_names = load_dataset(train_path, image_size=image_size, num_classes=num_classes)
-    val_dataset, _ = load_dataset(val_path, image_size=image_size, num_classes=num_classes)
+    train_dataset, class_names = load_dataset(train_path, image_size=image_size, allowed_classes=allowed_classes)
+    val_dataset, _ = load_dataset(val_path, image_size=image_size, allowed_classes=allowed_classes)
     
     if not train_dataset:
         print("Empty training dataset. Aborting.")
@@ -443,12 +447,11 @@ def train(model, train_path, val_path, image_size=64, epochs=10, learning_rate=0
 
 # ===================== Testing =====================
 
-def test(model, test_path, image_size=64):
+def test(model, test_path, image_size=64, allowed_classes=None):
     """
     Evaluate the model on test data.
     """
-    num_classes = model['config']['num_classes']
-    test_dataset, _ = load_dataset(test_path, image_size=image_size, num_classes=num_classes)
+    test_dataset, _ = load_dataset(test_path, image_size=image_size, allowed_classes=allowed_classes)
     
     if not test_dataset:
         print("Empty test dataset.")
@@ -502,7 +505,9 @@ def main():
     # Hyperparameters
     image_size = 64
     input_size = image_size * image_size
-    num_classes = 5 # Changed from 10 to 5
+    # Specifically allowed classes
+    allowed_classes = ["Capacitor", "Battery", "Transistor"]
+    num_classes = len(allowed_classes)
     
     print("\n[1] Initializing model...")
     model = initialize_model(
@@ -527,7 +532,8 @@ def main():
         image_size=image_size,
         epochs=30, 
         learning_rate=0.005, # Deeper models often need slightly smaller LR
-        batch_size=32
+        batch_size=32,
+        allowed_classes=allowed_classes
     )
     
     # Draw loss
@@ -536,7 +542,7 @@ def main():
     
     # Test model
     print("\n[4] Evaluating model...")
-    results = test(model, test_path=test_path, image_size=image_size)
+    results = test(model, test_path=test_path, image_size=image_size, allowed_classes=allowed_classes)
     if results:
         print(f"    Average Loss: {results['average_loss']:.4f}")
         print(f"    Accuracy: {results['accuracy'] * 100:.2f}%")
